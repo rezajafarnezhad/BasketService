@@ -24,12 +24,12 @@ public class BasketService : IBasketService
     }
     public async Task<BasketModel> GetOrCreateBasketForUser(string userId)
     {
-        var basketUser = await _context.Baskets.AsNoTracking().SingleOrDefaultAsync(c => c.UserId == userId);
+        var basketUser = await _context.Baskets
+            .Include(c => c.BasketItems).AsNoTracking().SingleOrDefaultAsync(c => c.UserId == userId);
 
         if (basketUser is null)
         {
-            var basket = new BasketModel();
-            basket.UserId = userId;
+            var basket = new Basket(userId);
             _context.Add(basket);
             await _context.SaveChangesAsync();
             return new BasketModel()
@@ -43,7 +43,9 @@ public class BasketService : IBasketService
 
     public async Task<BasketModel> GetBasketForUser(string userId)
     {
-        var basket = await _context.Baskets.AsNoTracking().SingleOrDefaultAsync(c => c.UserId == userId);
+        var basket = await _context.Baskets.Include(c => c.BasketItems)
+            .AsNoTracking().SingleOrDefaultAsync(c => c.UserId == userId);
+
         if (basket is null)
             return new BasketModel();
 
@@ -56,14 +58,15 @@ public class BasketService : IBasketService
         if (basket is null)
             throw new Exception("Basket not found ...");
 
-        basket.BasketItems.Add(addItem.Adapt(new BasketItem()));
+        var item = addItem.Adapt(new BasketItem());
+        basket.BasketItems.Add(item);
         await _context.SaveChangesAsync();
 
     }
 
     public async Task RemoveItemToBasketUser(Guid basketId, Guid itemId)
     {
-        var basket = await _context.Baskets.FindAsync(basketId);
+        var basket = await _context.Baskets.Include(c => c.BasketItems).SingleOrDefaultAsync(c => c.Id == basketId);
         if (basket is null)
             throw new Exception("Basket not found ...");
         basket.RemoveItem(basket.Id, itemId);
@@ -72,7 +75,7 @@ public class BasketService : IBasketService
 
     public async Task SetQuantityItemToBasketUser(Guid basketId, Guid itemId, int quantity)
     {
-        var basket = await _context.Baskets.FindAsync(basketId);
+        var basket = await _context.Baskets.Include(c => c.BasketItems).SingleOrDefaultAsync(c => c.Id == basketId);
         if (basket is null)
             throw new Exception("Basket not found ...");
         basket.SetQuantityBasketItem(basket.Id, itemId, quantity);

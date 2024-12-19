@@ -23,6 +23,7 @@ public class BasketItemModel
     public string ProductName { get; set; }
     public int Quantity { get; set; }
     public decimal UnitPrice { get; set; }
+    public string ImageProduct { get; set; }
 
 }
 

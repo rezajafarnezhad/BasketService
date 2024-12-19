@@ -4,7 +4,12 @@ public class Basket
 {
     public Guid Id { get; set; }
     public string UserId { get; set; }
-    public List<BasketItem> BasketItems { get; set; }
+    public List<BasketItem> BasketItems { get; set; } = [];
+
+    public Basket(string userId)
+    {
+        UserId = userId;
+    }
 
     public void RemoveItem(Guid basketId, Guid itemId)
     {

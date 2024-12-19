@@ -28,20 +28,20 @@ public class BasketController : ControllerBase
     }
 
     [HttpPost("AddItemToBasketUser")]
-    public async Task<IActionResult> AddItemToBasketUser([FromForm] AddItemToBasketModel model)
+    public async Task<IActionResult> AddItemToBasketUser([FromBody] AddItemToBasketModel model)
     {
         await _basketService.AddItemToBasketUser(model);
         return NoContent();
     }
 
-    [HttpDelete("RemoveItemToBasketUser{basketId}/{itemId}")]
+    [HttpDelete("RemoveItemToBasketUser/{basketId}/{itemId}")]
     public async Task<IActionResult> RemoveItemToBasketUser(Guid basketId, Guid itemId)
     {
         await _basketService.RemoveItemToBasketUser(basketId, itemId);
         return NoContent();
     }
 
-    [HttpPost("SetQuantityItemToBasketUser{basketId}/{itemId}/{quantity}")]
+    [HttpPost("SetQuantityItemToBasketUser/{basketId}/{itemId}/{quantity}")]
     public async Task<IActionResult> SetQuantityItemToBasketUser(Guid basketId, Guid itemId, int quantity)
     {
         await _basketService.SetQuantityItemToBasketUser(basketId, itemId, quantity);
