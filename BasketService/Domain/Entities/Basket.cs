@@ -25,20 +25,31 @@ public class Basket
     }
 
     public void ApplyDiscountToBasket(Guid discountId) => DiscountId = discountId;
+
+    public void AddItem(int quantity, Guid basketId, Guid productId)
+    {
+        BasketItems.Add(new BasketItem(quantity, basketId, productId));
+    }
 }
 
 public class BasketItem
 {
     public Guid Id { get; set; }
-    public Guid ProductId { get; set; }
-    public string ProductName { get; set; }
-    public int Quantity { get; set; }
-    public decimal UnitPrice { get; set; }
-    public string ImageProduct { get; set; }
-
     public Guid BasketId { get; set; }
+    public int Quantity { get; set; }
     public Basket Basket { get; set; }
 
+    public Guid ProductId { get; set; }
+    public Product Product { get; set; }
+
+    private BasketItem() { }
+    public BasketItem(int quantity, Guid basketId, Guid productId)
+    {
+        Quantity = quantity;
+        BasketId = basketId;
+        ProductId = productId;
+    }
 
     public void SetQuantity(int quantity) => Quantity = quantity;
+
 }

@@ -26,7 +26,7 @@ public class BasketService : IBasketService
     public async Task<BasketModel> GetOrCreateBasketForUser(string userId)
     {
         var basketUser = await _context.Baskets
-            .Include(c => c.BasketItems).AsNoTracking().SingleOrDefaultAsync(c => c.UserId == userId);
+            .Include(c => c.BasketItems).ThenInclude(c => c.Product).AsNoTracking().SingleOrDefaultAsync(c => c.UserId == userId);
 
         if (basketUser is null)
         {
@@ -43,7 +43,9 @@ public class BasketService : IBasketService
     }
     public async Task<BasketModel> GetBasketForUser(string userId)
     {
-        var basket = await _context.Baskets.Include(c => c.BasketItems)
+        var basket = await _context.Baskets
+            .Include(c => c.BasketItems)
+            .ThenInclude(c => c.Product)
             .AsNoTracking().SingleOrDefaultAsync(c => c.UserId == userId);
 
         if (basket is null)
@@ -58,15 +60,26 @@ public class BasketService : IBasketService
         if (basket is null)
             throw new Exception("Basket not found ...");
 
-        var item = addItem.Adapt(new BasketItem());
-        basket.BasketItems.Add(item);
-        await _context.SaveChangesAsync();
+        var isExistProduct = await _context.Products.AnyAsync(c => c.ProductId == addItem.ProductId);
+        if (!isExistProduct)
+        {
+            var product = new Product(addItem.ProductId, addItem.ProductName, addItem.UnitPrice, addItem.ImageProduct);
+            _context.Products.Add(product);
+            await _context.SaveChangesAsync();
+        }
 
+
+        basket.AddItem(addItem.Quantity, addItem.BasketId, addItem.ProductId);
+        await _context.SaveChangesAsync();
     }
 
     public async Task RemoveItemToBasketUser(Guid basketId, Guid itemId)
     {
-        var basket = await _context.Baskets.Include(c => c.BasketItems).SingleOrDefaultAsync(c => c.Id == basketId);
+        var basket = await _context.Baskets
+            .Include(c => c.BasketItems)
+            .ThenInclude(c => c.Product)
+            .SingleOrDefaultAsync(c => c.Id == basketId);
+
         if (basket is null)
             throw new Exception("Basket not found ...");
         basket.RemoveItem(basket.Id, itemId);
@@ -75,7 +88,10 @@ public class BasketService : IBasketService
 
     public async Task SetQuantityItemToBasketUser(Guid basketId, Guid itemId, int quantity)
     {
-        var basket = await _context.Baskets.Include(c => c.BasketItems).SingleOrDefaultAsync(c => c.Id == basketId);
+        var basket = await _context.Baskets
+            .Include(c => c.BasketItems)
+            .ThenInclude(c => c.Product)
+            .SingleOrDefaultAsync(c => c.Id == basketId);
         if (basket is null)
             throw new Exception("Basket not found ...");
         basket.SetQuantityBasketItem(basket.Id, itemId, quantity);

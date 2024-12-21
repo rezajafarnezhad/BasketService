@@ -9,6 +9,7 @@
   </PropertyGroup>
 
 	<ItemGroup>
+		<PackageReference Include="Grpc.AspNetCore" Version="2.49.0" />
 		<PackageReference Include="Mapster" Version="7.4.0" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.2" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.2">
@@ -22,6 +23,12 @@
 		</PackageReference>
 		<PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.21.0" />
 		<PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Protobuf Include="..\..\..\EShopMicroservice2\DiscountService\DiscountService\Proto\Discount.proto" GrpcServices="Both">
+	    <Link>Protos\Discount.proto</Link>
+	  </Protobuf>
 	</ItemGroup>
 
 </Project>

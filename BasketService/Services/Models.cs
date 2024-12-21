@@ -10,7 +10,7 @@ public class BasketModel
     {
         if (BasketItems.Count > 0)
         {
-            return BasketItems.Sum(c => c.UnitPrice * c.Quantity);
+            return BasketItems.Sum(c => c.Product.UnitPrice * c.Quantity);
         }
 
         return 0;
@@ -20,14 +20,18 @@ public class BasketModel
 public class BasketItemModel
 {
     public Guid Id { get; set; }
-    public Guid ProductId { get; set; }
-    public string ProductName { get; set; }
     public int Quantity { get; set; }
-    public decimal UnitPrice { get; set; }
-    public string ImageProduct { get; set; }
 
+    public ProductModel Product { get; set; }
 }
 
+public class ProductModel
+{
+    public Guid ProductId { get; set; }
+    public string ProductName { get; set; }
+    public decimal UnitPrice { get; set; }
+    public string ImageProduct { get; set; }
+}
 
 public class AddItemToBasketModel
 {

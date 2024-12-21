@@ -1,5 +1,6 @@
 using BasketService.Infrastructure;
 using BasketService.Services;
+using DiscountService.Proto;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -12,6 +13,15 @@ builder.Services.AddDbContext<BasketDatebaseContext>(op =>
     op.UseSqlServer(builder.Configuration.GetConnectionString("SqlServer")));
 
 builder.Services.AddScoped<IBasketService, BasketService.Services.BasketService>();
+
+builder.Services.AddGrpcClient<DiscountServiceProto.DiscountServiceProtoClient>(service =>
+{
+    service.Address = new Uri(builder.Configuration["Discount:uri"]);
+});
+
+builder.Services.AddScoped<IDiscountService, BasketService.Services.DiscountService>();
+
+
 
 var app = builder.Build();
 
