@@ -4,6 +4,7 @@ public class Basket
 {
     public Guid Id { get; set; }
     public string UserId { get; set; }
+    public Guid? DiscountId { get; set; }
     public List<BasketItem> BasketItems { get; set; } = [];
 
     public Basket(string userId)
@@ -22,6 +23,8 @@ public class Basket
         var basketItem = BasketItems.FirstOrDefault(c => c.BasketId == basketId && c.Id == itemId);
         basketItem.SetQuantity(quantity);
     }
+
+    public void ApplyDiscountToBasket(Guid discountId) => DiscountId = discountId;
 }
 
 public class BasketItem

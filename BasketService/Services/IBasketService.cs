@@ -13,6 +13,7 @@ public interface IBasketService
     Task AddItemToBasketUser(AddItemToBasketModel addItem);
     Task RemoveItemToBasketUser(Guid basketId, Guid itemId);
     Task SetQuantityItemToBasketUser(Guid basketId, Guid itemId, int quantity);
+    Task ApplyDiscountToBasket(Guid basketId, Guid discountId);
 }
 
 public class BasketService : IBasketService
@@ -40,7 +41,6 @@ public class BasketService : IBasketService
         }
         return basketUser.Adapt(new BasketModel());
     }
-
     public async Task<BasketModel> GetBasketForUser(string userId)
     {
         var basket = await _context.Baskets.Include(c => c.BasketItems)
@@ -79,6 +79,16 @@ public class BasketService : IBasketService
         if (basket is null)
             throw new Exception("Basket not found ...");
         basket.SetQuantityBasketItem(basket.Id, itemId, quantity);
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task ApplyDiscountToBasket(Guid basketId, Guid discountId)
+    {
+        var basket = await _context.Baskets.FindAsync(basketId);
+        if (basket is null)
+            throw new Exception("Basket not found ...");
+
+        basket.ApplyDiscountToBasket(discountId);
         await _context.SaveChangesAsync();
     }
 }

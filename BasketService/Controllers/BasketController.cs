@@ -47,4 +47,11 @@ public class BasketController : ControllerBase
         await _basketService.SetQuantityItemToBasketUser(basketId, itemId, quantity);
         return NoContent();
     }
+
+    [HttpPut("ApplyDiscountToBasket/{basketId}/{discountId}")]
+    public async Task<IActionResult> ApplyDiscountToBasket(Guid basketId, Guid discountId)
+    {
+        await _basketService.ApplyDiscountToBasket(basketId, discountId);
+        return Accepted();
+    }
 }

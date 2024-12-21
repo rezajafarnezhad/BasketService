@@ -3,6 +3,7 @@ public class BasketModel
 {
     public Guid Id { get; set; }
     public string UserId { get; set; }
+    public Guid? DiscountId { get; set; }
     public List<BasketItemModel> BasketItems { get; set; } = [];
 
     public decimal Total()
