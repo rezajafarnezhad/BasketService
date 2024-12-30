@@ -1,7 +1,12 @@
 ﻿using BasketService.Domain.Entities;
 using BasketService.Infrastructure;
+using BasketService.MessagingBus;
+using BasketService.MessagingBus.Models;
+using BasketService.Services.DiscountModel;
+using BasketService.Services.MessageModels;
 using Mapster;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace BasketService.Services;
 
@@ -14,14 +19,19 @@ public interface IBasketService
     Task RemoveItemToBasketUser(Guid basketId, Guid itemId);
     Task SetQuantityItemToBasketUser(Guid basketId, Guid itemId, int quantity);
     Task ApplyDiscountToBasket(Guid basketId, Guid discountId);
+    Task<OperationResult> CheckOut(CheckOutBasketModel model, IDiscountService discountService);
 }
 
 public class BasketService : IBasketService
 {
     private readonly BasketDatebaseContext _context;
-    public BasketService(BasketDatebaseContext context)
+    private readonly IMessageBus _messageBus;
+    private readonly RabbitMqConfiguration _rabbitMqConfiguration;
+    public BasketService(BasketDatebaseContext context, IMessageBus messageBus, IOptions<RabbitMqConfiguration> rabbitMqConfiguration)
     {
         _context = context;
+        _messageBus = messageBus;
+        _rabbitMqConfiguration = rabbitMqConfiguration.Value;
     }
     public async Task<BasketModel> GetOrCreateBasketForUser(string userId)
     {
@@ -106,5 +116,53 @@ public class BasketService : IBasketService
 
         basket.ApplyDiscountToBasket(discountId);
         await _context.SaveChangesAsync();
+    }
+
+    public async Task<OperationResult> CheckOut(CheckOutBasketModel model, IDiscountService discountService)
+    {
+        //get basket
+        var basket = await _context.Baskets.AsNoTracking()
+            .Include(c => c.BasketItems)
+            .ThenInclude(c => c.Product)
+            .SingleOrDefaultAsync(c => c.Id == model.BasketId);
+
+        if (basket is null)
+            return OperationResult.NotFound("سبد خرید یافت نشد");
+
+        //Create message
+        var message = model.Adapt(new BasketCheckOutMessage());
+
+        var totalPrice = 0;
+
+        basket.BasketItems.ForEach(c =>
+        {
+            message.BasketItemMessage.Add(new BasketItemMessage()
+            {
+                ProductId = c.ProductId,
+                ProductName = c.Product.ProductName,
+                Quantity = c.Quantity,
+                BasketItemId = c.Id,
+                Price = c.Product.UnitPrice
+            });
+        });
+        message.TotalPrice = message.BasketItemMessage.Sum(c => c.Quantity * c.Price);
+
+        //get discount
+
+        OperationResult<DiscountInfoModel> discount = null;
+        if (basket.DiscountId is not null)
+            discount = await discountService.GetDiscountById(basket.DiscountId.Value.ToString());
+
+        //clc discount
+
+        message.TotalPrice = discount is { Data: not null } ? message.TotalPrice - discount.Data.Amount : message.TotalPrice;
+        //send message
+        await _messageBus.SendMessage(message, _rabbitMqConfiguration.QueueName);
+
+
+
+        _context.Baskets.Remove(basket);
+        await _context.SaveChangesAsync();
+        return OperationResult.Success();
     }
 }

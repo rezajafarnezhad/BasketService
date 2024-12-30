@@ -54,4 +54,13 @@ public class BasketController : ControllerBase
         await _basketService.ApplyDiscountToBasket(basketId, discountId);
         return Accepted();
     }
+
+    [HttpPost("CheckOut")]
+    public async Task<IActionResult> CheckOut([FromBody] CheckOutBasketModel model, [FromServices] IDiscountService discountService)
+    {
+        var result = await _basketService.CheckOut(model, discountService);
+        if (result.HasError)
+            return BadRequest();
+        return Ok(result);
+    }
 }
