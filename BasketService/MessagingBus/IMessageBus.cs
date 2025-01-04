@@ -2,7 +2,6 @@
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using RabbitMQ.Client;
-using RabbitMQ.Client.Events;
 using System.Text;
 
 namespace BasketService.MessagingBus;
@@ -10,7 +9,6 @@ namespace BasketService.MessagingBus;
 public interface IMessageBus
 {
     Task SendMessage(BaseMessage message, string queueName);
-    Task ReceivedMessage(string queueName);
 }
 
 
@@ -28,40 +26,16 @@ public class RabbitMqMessageBus : IMessageBus
     {
         var connection = await _rabbitMqHelper.CheckCreateRabbitMqConnection(_rabbitMqConfiguration.HostName, _rabbitMqConfiguration.UserName, _rabbitMqConfiguration.Password);
 
-        await using var channel = await connection.CreateChannelAsync();
+        using var channel = connection.CreateModel();
 
-        await channel.QueueDeclareAsync(queue: _rabbitMqConfiguration.QueueName, durable: true,
-            exclusive: false, autoDelete: false, arguments: null);
+        channel.QueueDeclare(queue: _rabbitMqConfiguration.QueueName, durable: true,
+           exclusive: false, autoDelete: false, arguments: null);
 
         var body = _rabbitMqHelper.CreateBody(message);
-        var basicProperties = new BasicProperties
-        {
-            Persistent = true,
-        };
-        await channel.BasicPublishAsync(exchange: "", routingKey: _rabbitMqConfiguration.QueueName, mandatory: false, basicProperties, body);
+        var prop = channel.CreateBasicProperties();
+        prop.Persistent = true;
+        channel.BasicPublish(exchange: "", routingKey: _rabbitMqConfiguration.QueueName, mandatory: false, prop, body);
 
-    }
-
-    public async Task ReceivedMessage(string queueName)
-    {
-        var connection = await _rabbitMqHelper.CheckCreateRabbitMqConnection(_rabbitMqConfiguration.HostName, _rabbitMqConfiguration.UserName, _rabbitMqConfiguration.Password);
-
-        await using var channel = await connection.CreateChannelAsync();
-
-        await channel.QueueDeclareAsync(queue: queueName, durable: true,
-            exclusive: false, autoDelete: false, arguments: null);
-
-        var consumer = new AsyncEventingBasicConsumer(channel);
-
-        consumer.ReceivedAsync += async (model, eventArgs) =>
-        {
-            var body = eventArgs.Body.ToArray();
-            var message = Encoding.UTF8.GetString(body);
-            await Task.Delay(3000);
-            Console.WriteLine(message);
-        };
-
-        await channel.BasicConsumeAsync("basketQueue", true, consumer);
     }
 }
 
@@ -87,7 +61,7 @@ public class RabbitMqMessageBusHelper : IRabbitMqMessageBusHelper
                 Password = password,
             };
 
-            _connection = await connectionFactory.CreateConnectionAsync();
+            _connection = connectionFactory.CreateConnection();
             return _connection;
         }
         catch (Exception e)

@@ -14,5 +14,7 @@ public class Product
         UnitPrice = unitPrice;
         ImageProduct = imageProduct;
     }
+
+    public void EditName(string productName) => ProductName = productName;
     public List<BasketItem> BasketItems { get; set; } = [];
 }

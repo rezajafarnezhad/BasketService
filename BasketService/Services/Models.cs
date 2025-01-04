@@ -55,7 +55,12 @@ public class CheckOutBasketModel
     public string PhoneNumber { get; set; }
 }
 
+public class ProductUpdateMessage
+{
+    public Guid ProductId { get; set; }
+    public string ProductName { get; set; }
 
+}
 
 public class OperationResult
 {

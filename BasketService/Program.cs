@@ -1,4 +1,5 @@
 using BasketService.Infrastructure;
+using BasketService.Jobs;
 using BasketService.MessagingBus;
 using BasketService.MessagingBus.Models;
 using BasketService.Services;
@@ -26,7 +27,7 @@ builder.Services.Configure<RabbitMqConfiguration>(builder.Configuration.GetSecti
 builder.Services.AddScoped<IMessageBus, RabbitMqMessageBus>();
 builder.Services.AddScoped<IRabbitMqMessageBusHelper, RabbitMqMessageBusHelper>();
 
-
+builder.Services.AddHostedService<ReceivedProductUpdateMessage>();
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
